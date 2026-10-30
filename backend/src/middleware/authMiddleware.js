@@ -1,31 +1,50 @@
-
 const jwt = require("jsonwebtoken");
+const Token = require("../models/tokenModel");
+const User = require("../models/userModel");
 
-const verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({
-      message: "Access token is missing",
-    });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({
-      message: "Access token is missing",
-    });
-  }
-
+const verifyToken = async (req, res, next) => {
   try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    const authHeader = req.headers.authorization;
 
-    req.user = verified;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "Access denied. No token provided."
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    // Check if token is blacklisted
+    const blacklistedToken = await Token.findOne({ token });
+
+    if (blacklistedToken) {
+      return res.status(401).json({
+        message: "Token has been invalidated. Please log in again."
+      });
+    }
+
+    // Verify JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Get the user's latest role from the database
+    const user = await User.findById(decoded.id).select("_id role");
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User no longer exists."
+      });
+    }
+
+    req.user = {
+      id: user._id,
+      role: user.role
+    };
+
     next();
-  } catch (err) {
+
+  } catch (error) {
     return res.status(401).json({
-      message: "Token is invalid or expired",
+      message: "Invalid or expired token."
     });
   }
 };

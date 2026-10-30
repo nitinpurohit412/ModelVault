@@ -23,9 +23,10 @@ const models = async (req, res, next) => {
       name: name.trim(),
       provider: provider.trim(),
       description: description.trim(),
+      isActive: true,
     });
     res.status(201).json({
-      message: `Model successfully created and the newly created model is ${name}`,
+      message: `Model successfully created and the newly created model is ${newModel.name}`,
       newModel,
     });
   } catch (err) {
@@ -50,6 +51,7 @@ const getModels = async (req, res, next) => {
 
     const allowedModels = await Model.find({
       _id: { $in: modelIds },
+      isActive: true,
     });
     return res.status(200).json({ models: allowedModels });
   } catch (err) {
@@ -76,6 +78,12 @@ const getModelById = async (req, res, next) => {
 
     if (req.user.role === "admin" || req.user.role === "manager") {
       return res.status(200).json({ model });
+    }
+
+    if (!model.isActive) {
+      return res.status(403).json({
+        message: "This model is currently inactive.",
+      });
     }
 
     const permission = await AccessPermission.findOne({
@@ -117,9 +125,9 @@ const updateModels = async (req, res, next) => {
     const updatedModel = await Model.findByIdAndUpdate(
       id,
       {
-        name: name,
-        provider: provider,
-        description: description,
+        name: name.trim(),
+        provider: provider.trim(),
+        description: description.trim(),
       },
       { new: true, runValidators: true },
     );
@@ -160,4 +168,40 @@ const deleteModel = async (req, res, next) => {
   }
 };
 
-module.exports = { models, getModels, getModelById, updateModels, deleteModel };
+const toggleModelStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        message: "Invalid model ID",
+      });
+    }
+    const model = await Model.findById(id);
+
+    if (!model) {
+      return res.status(404).json({
+        message: "Model not found",
+      });
+    }
+
+    model.isActive = !model.isActive;
+
+    await model.save();
+
+    res.status(200).json({
+      message: `Model successfully ${model.isActive ? "activated" : "deactivated"}`,
+      model,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  models,
+  getModels,
+  getModelById,
+  updateModels,
+  deleteModel,
+  toggleModelStatus,
+};

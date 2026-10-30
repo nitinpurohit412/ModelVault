@@ -21,8 +21,10 @@ const grantAccess = async (req, res) => {
     }
 
     const model = await Model.findById(modelId);
-    if (!model) {
-      return res.status(404).json({ message: "Model not found" });
+    if (!model.isActive) {
+      return res.status(400).json({
+        message: "Cannot grant access to an inactive model",
+      });
     }
 
     const grantedBy = req.user.id;
@@ -92,4 +94,40 @@ const revokeAccess = async (req, res) => {
   }
 };
 
-module.exports = { grantAccess, revokeAccess };
+const getPermissions = async (req, res) => {
+  try {
+    const permissions = await AccessPermission.find()
+      .populate("user", "userName email")
+      .populate("model", "name provider");
+
+    res.status(200).json({ permissions });
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch permissions",
+    });
+  }
+};
+
+const getMyPermissions = async (req, res) => {
+  try {
+    const permissions = await AccessPermission.find({
+      user: req.user.id,
+    })
+      .populate("model", "name provider")
+      .populate("user", "userName email");
+
+    res.status(200).json({ permissions });
+  } catch (err) {
+    console.error("MY PERMISSIONS ERROR:", err);
+    res.status(500).json({
+      message: "Failed to fetch your permissions",
+    });
+  }
+};
+
+module.exports = {
+  grantAccess,
+  revokeAccess,
+  getPermissions,
+  getMyPermissions,
+};
