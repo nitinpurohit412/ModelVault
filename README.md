@@ -104,7 +104,7 @@ Make sure you have installed:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ModelVault.git
+git clone https://github.com/nitinpurohit412/ModelVault.git
 
 cd ModelVault
 ```
