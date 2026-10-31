@@ -41,7 +41,7 @@ function PermissionsTable({
                 <option value="">Choose a user</option>
                 {users.map((user) => (
                   <option key={user._id} value={user._id}>
-                    {user.firstName} {user.lastName} ({user.email})
+                    {user.userName} - {user.email}
                   </option>
                 ))}
               </select>
