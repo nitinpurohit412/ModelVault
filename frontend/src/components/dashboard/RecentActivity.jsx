@@ -1,4 +1,40 @@
+import { useEffect, useState } from "react";
+
+function getRelativeTime(date, now) {
+  const timestamp = new Date(date).getTime();
+
+  if (Number.isNaN(timestamp)) return "";
+
+  const difference = Math.max(0, now - timestamp);
+
+  const seconds = Math.floor(difference / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (hours < 24) return `${hours} hr ago`;
+  if (days < 7) return `${days} days ago`;
+
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function RecentActivity({ activities }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section className="overflow-hidden rounded-3xl bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.12)] ring-1 ring-neutral-900/[0.06]">
       <div className="border-b border-neutral-100 px-6 py-5 sm:px-7">
@@ -42,7 +78,7 @@ function RecentActivity({ activities }) {
               </div>
 
               <span className="shrink-0 pt-0.5 text-xs text-neutral-400">
-                {new Date(activity.createdAt).toLocaleDateString()}
+                {getRelativeTime(activity.createdAt, now)}
               </span>
             </div>
           ))

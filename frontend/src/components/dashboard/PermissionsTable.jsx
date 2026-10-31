@@ -1,3 +1,27 @@
+function getRelativeTime(date) {
+  const timestamp = new Date(date).getTime();
+
+  if (Number.isNaN(timestamp)) return "—";
+
+  const difference = Math.max(0, Date.now() - timestamp);
+
+  const seconds = Math.floor(difference / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (hours < 24) return `${hours} hr ago`;
+  if (days < 7) return `${days} days ago`;
+
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function PermissionsTable({
   permissions,
   permissionsLoading,
@@ -103,7 +127,9 @@ function PermissionsTable({
                 <th className="px-6 py-3.5 font-medium">Model</th>
                 <th className="px-6 py-3.5 font-medium">Granted on</th>
                 {isAdmin && (
-                  <th className="px-6 py-3.5 text-right font-medium">Action</th>
+                  <th className="px-6 py-3.5 text-right font-medium">
+                    Action
+                  </th>
                 )}
               </tr>
             </thead>
@@ -129,7 +155,10 @@ function PermissionsTable({
                 </tr>
               ) : permissions.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 4 : 3} className="px-6 py-16 text-center">
+                  <td
+                    colSpan={isAdmin ? 4 : 3}
+                    className="px-6 py-16 text-center"
+                  >
                     <p className="text-sm font-medium text-neutral-900">
                       No permissions have been granted yet.
                     </p>
@@ -170,9 +199,7 @@ function PermissionsTable({
                     </td>
 
                     <td className="px-6 py-4 text-sm text-neutral-500">
-                      {permission.createdAt
-                        ? new Date(permission.createdAt).toLocaleDateString()
-                        : "—"}
+                      {getRelativeTime(permission.createdAt)}
                     </td>
 
                     {isAdmin && (
